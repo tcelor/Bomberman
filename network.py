@@ -4,6 +4,7 @@
 from model import *
 import socket
 import select
+import pickle
 
 ################################################################################
 #                          NETWORK SERVER CONTROLLER                           #
@@ -17,12 +18,7 @@ class NetworkServerController:
         self.map_name = map_file
         self.clients = []
         self.nick_to_client = {}
-        self.str_fruits = []
-        for fruit in self.model.fruits:
-            self.str_fruits.append([fruit.pos, fruit.kind])
         self.str_character = []
-        for fruit in self.model.characters:
-            self.str_character.append([self.model.characters.pos, self.model.characters.kind])
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.s.bind(('', port))
@@ -36,13 +32,14 @@ class NetworkServerController:
             if client == self.s:
                 co, addr = self.s.accept()
                 self.clients.append(co)
+                print("ok")
                 data = self.map_name
                 data = data.encode()
                 co.send(data)
                 data = co.recv(1500)
                 data = data.decode()
                 if data == "ok":
-                    data = str(self.str_fruits)
+                    data = pickle.dumps(self.model.fruits)
                     data = data.encode()
                     co.send(data)
             else:
@@ -79,18 +76,10 @@ class NetworkClientController:
         self.socket.send(data.encode())
         data = self.socket.recv(1500)
         data = data.decode()
-        data = data[2:-2]
-        fruits = data.split("], [")
-        for fruit in fruits:
-            fruit = fruit.replace("(", "")
-            fruit = fruit.replace(")", "")
-            fruit = fruit.replace(",", "")
-            value_fruit = fruit.split(" ")
-            dic ={}
-            dic[X] = int(value_fruit[0])
-            dic[Y] = int(value_fruit[1])
-
-            self.model.add_fruit(int(value_fruit[2]), dic)
+        data = pickle.loads(data)
+        print(data)
+        for fruit in data :
+            self.model.add_fruit(fruit.kind, fruit.pos)
 
 
         data = "#nickname " + nickname

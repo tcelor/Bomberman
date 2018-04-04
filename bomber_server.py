@@ -36,7 +36,6 @@ model = Model()
 model.load_map(map_file)
 for i in range(10): model.add_fruit()
 server = NetworkServerController(model, port, map_file)
-print(server.str_fruits)
 view = GraphicView(model, "server")
 
 # main loop

@@ -46,5 +46,4 @@ while True:
     view.tick(dt)
 
 # quit
-print("Game Over!")
 pygame.quit()

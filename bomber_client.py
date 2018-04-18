@@ -31,19 +31,20 @@ pygame.display.init()
 pygame.font.init()
 clock = pygame.time.Clock()
 client = NetworkClientController(host, port, nickname)
-view = GraphicView(client.model, nickname)
-kb = KeyboardController(client)
+if client.model == None:
+    pygame.quit()
+else:
+    view = GraphicView(client.model, nickname)
+    kb = KeyboardController(client)
+    # main loop
+    while True:
+        # make sure game doesn't run at more than FPS frames per second
+        dt = clock.tick(FPS)
+        if not kb.tick(dt): break
+        if not client.tick(dt): break
+        client.model.tick(dt)
+        view.tick(dt)
 
-
-# main loop
-while True:
-    # make sure game doesn't run at more than FPS frames per second
-    dt = clock.tick(FPS)
-    if not kb.tick(dt): break
-    if not client.tick(dt): break
-    client.model.tick(dt)
-    view.tick(dt)
-
-# quit
-print("Game Over!")
-pygame.quit()
+    # quit
+    print("Disconnect")
+    pygame.quit()

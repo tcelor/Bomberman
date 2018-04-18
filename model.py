@@ -37,7 +37,7 @@ ZELDA = 1
 BATMAN = 2
 CHARACTERS = [DK, ZELDA, BATMAN]
 CHARACTERS_STR = ["dk", "zelda", "batman"]
-HEALTH = 50
+HEALTH = 10
 MAX_RANGE = 5
 COUNTDOWN = 5
 IMMUNITY = 1500 # in ms
@@ -180,12 +180,13 @@ class Character:
 class Model:
 
     # initialize model
-    def __init__(self):
+    def __init__(self, evm = None):
         self.map = Map()
         self.characters = []
         self.fruits = []
         self.bombs = []
         self.player = None
+        self.evm = evm #here for kill character
 
     # look for a character, return None if not found
     def look(self, nickname):
@@ -205,7 +206,10 @@ class Model:
             print("Error: nickname {} not found!".format(nickname))
             sys.exit(1)
         self.characters.remove(character)
-        if self.player == character: self.player = None
+        if self.player == character:
+            self.player = None
+            if self.evm != None:
+                self.evm.die()
         print("=> kill \"{}\"".format(nickname))
         return character
 
@@ -279,5 +283,4 @@ class Model:
         for bomb in self.bombs:
             for character in self.characters:
                 if character.explosion(bomb):
-                    self.characters.remove(character)
-                    self.player = None
+                    self.kill_character(character.nickname)

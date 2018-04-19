@@ -5,6 +5,10 @@ from model import *
 import socket
 import select
 import pickle
+from time import sleep
+
+
+TIME_RESPAWN_BOMB = 10000
 
 ################################################################################
 #                          NETWORK SERVER CONTROLLER                           #
@@ -23,13 +27,25 @@ class NetworkServerController:
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.s.bind(('', port))
         self.s.listen(1)
+        self.bomb = 0 # time for a random bomb (in ms)
 
     # time event
     def send_all(self, clients, data):
         for client in clients:
             client.send(data)
 
+    def put_bomb(self):
+        pos = self.model.map.random()
+        self.bomb = TIME_RESPAWN_BOMB
+        self.model.bombs.append(Bomb(self.model.map, pos))
+        action = ["#bomb", self.model.bombs]
+        self.send_all(self.clients,pickle.dumps(action))
+
     def tick(self, dt):
+        if self.bomb > 0:
+            self.bomb -= dt
+        else:
+            self.put_bomb()
         demande, b, c = select.select([self.s] + self.clients,[],[],1)
         for client in demande:
             if client == self.s:
@@ -42,7 +58,7 @@ class NetworkServerController:
                 if not data:
                     character = None
                     for char in self.model.characters:
-                        if char.nickname == self.nick_to_client[client]:
+                        if char != None and char.nickname == self.nick_to_client[client]:
                             character = char
                     exist = False
                     for account in self.account:
@@ -86,7 +102,7 @@ class NetworkServerController:
                         client.close()
                 if (commands[0] == "#die"):
                     for character in self.model.characters:
-                        if character.nickname == commands[1]:
+                        if character != None and character.nickname == commands[1]:
                             self.model.kill_character(commands[1])
                     if (self.model.characters == []):
                         for player in self.clients:
@@ -105,13 +121,13 @@ class NetworkServerController:
                             if character.nickname == self.nick_to_client[client]:
                                 cli = client
                         if cli != None:
-                            action = ["#winner", "You can be proud of you because you beat all players GG, YOU WIN , if you want to restart with your friends kill yourself"]
+                            action = ["#winner", "You can be proud of you because you beat all players GG, YOU WIN. if you want to restart with your friends, kill yourself"]
                             cli.send(pickle.dumps(action))
                 if (commands[0] == "#give_me_map"):
                     data = pickle.dumps(self.model)
                     client.send(data)
                 if (commands[0] == "#move"):
-                    action = ["#move", self.model.characters]
+                    action = ["#move", self.model.characters, self.model.bombs]
                     self.model.move_character(commands[1], int(commands[2]))
                     self.send_all(self.clients,pickle.dumps(action))
                 if (commands[0] == "#bomb"):
@@ -192,7 +208,10 @@ class NetworkClientController:
                 data = pickle.loads(data)
                 if data[0] == "#bomb":
                     self.model.bombs = data[1]
-                if data[0] == "#move" or data[0] == "#add" or data[0] == "#del" or data[0] == "#rematch":
+                if data[0] == "#move":
+                    self.model.characters = data[1]
+                    self.model.bombs = data[2]
+                if data[0] == "#add" or data[0] == "#del" or data[0] == "#rematch":
                     self.model.characters = data[1]
                 if data[0] == "#rematch":
                     self.model.map = data[2]
@@ -200,6 +219,8 @@ class NetworkClientController:
                     self.model.bombs = data[4]
                 if data[0] == "#winner":
                     print(data[1])
+                if data[0] == "#add_bomb":
+                    self.model.bombs.append(Bomb(self.model.map, data[1]))
                 for char in self.model.characters:
                     if (char.nickname == self.nickname):
                         self.model.player = char

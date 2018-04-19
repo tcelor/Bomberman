@@ -66,8 +66,10 @@ class NetworkServerController:
                         found = False
                         for account in self.account:
                             nick,cli,char = account
+                            print(char)
                             if nick == commands[1]:
-                                self.model.characters.append(char)
+                                if char != None:
+                                    self.model.characters.append(char)
                                 self.nick_to_client[client] = commands[1]
                                 action = ["#add", self.model.characters, self.model.map, self.model.fruits, self.model.bombs]
                                 self.send_all(self.clients,pickle.dumps(action))
@@ -89,6 +91,10 @@ class NetworkServerController:
                     if (self.model.characters == []):
                         for player in self.clients:
                             self.model.add_character(self.nick_to_client[player], isplayer = False)
+                        self.model.load_map(self.map_name)
+                        self.model.fruits = []
+                        self.model.bombs = []
+                        print(self.model.map)
                         for i in range(10): self.model.add_fruit()
                         action = ["#rematch", self.model.characters, self.model.map, self.model.fruits, self.model.bombs]
                         self.send_all(self.clients,pickle.dumps(action))

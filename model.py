@@ -22,14 +22,16 @@ DIRECTIONS_STR = ["left", "right", "up", "down"]
 
 # map
 WALLS = ('w', 'x', 'z')
-BACKGROUNDS = ('0', '1', '2')
+BACKGROUNDS = ('0', '1', '2', '3')
 DEFAULT_MAP = "maps/map0"
 
 # fruit
 BANANA = 0
 CHERRY = 1
-FRUITS = [BANANA, CHERRY]
-FRUITS_STR = ["banana", "cherry"]
+IMMUNE = 2
+DISARME = 3
+FRUITS = [BANANA, CHERRY, IMMUNE, DISARME]
+FRUITS_STR = ["banana", "cherry", "immune", "disarme"]
 
 # character
 DK = 0
@@ -40,8 +42,8 @@ CHARACTERS_STR = ["dk", "zelda", "batman"]
 HEALTH = 10
 MAX_RANGE = 5
 COUNTDOWN = 5
-IMMUNITY = 1500 # in ms
-DISARMED = 2000 # in ms
+IMMUNITY = 3000 # in ms
+DISARMED = 4000 # in ms
 
 ### Class Map ###
 
@@ -64,12 +66,14 @@ class Map:
             self.height = len(self.array)
             self.width = len(self.array[0])
 
-    def random(self):
+    def random(self, is_fruit = None):
         while True:
-            x = random.randint(0, self.width-1)
-            y = random.randint(0, self.height-1)
-            if self.array[y][x] in BACKGROUNDS:
+            x = random.randint(1, self.width - 2)
+            y = random.randint(1, self.height - 2)
+            if self.array[y][x] in BACKGROUNDS and not is_fruit:
                 break
+            if is_fruit:
+                return (x,y)
         return (x,y)
 
 ### Class Fruit ###
@@ -147,10 +151,18 @@ class Character:
                     self.pos = (self.pos[X], self.pos[Y]+1)
             self.direction = DIRECTION_DOWN
 
-    def eat(self, fruit):
+    def eat(self, fruit, player):
         if fruit.pos[X] == self.pos[X] and fruit.pos[Y] == self.pos[Y]:
-            self.health += 10
-            print("{}\'s health: {}".format(self.nickname, self.health))
+            if fruit.kind == DISARME:
+                self.disarmed = DISARMED
+                ("You have been disarmed")
+            elif fruit.kind == IMMUNE:
+                self.immunity = IMMUNITY
+                if player != None and self.nickname == player.nickname:
+                    print("You are a god, you can't take dammage")
+            else:
+                self.health += 10
+                print("{}\'s health: {}".format(self.nickname, self.health))
             return True
         return False
 
@@ -162,18 +174,26 @@ class Character:
         else: self.disarmed = 0
 
     def explosion(self, bomb):
-        if bomb.countdown != 0: return False
-        if self.immunity > 0: return False
+        if bomb.countdown != 0: return False , self.map
+        if self.immunity > 0: return False , self.map
         horizontal = (self.pos[Y] == bomb.pos[Y] and self.pos[X] >= bomb.range[DIRECTION_LEFT] and self.pos[X] <= bomb.range[DIRECTION_RIGHT])
         vertical = (self.pos[X] == bomb.pos[X] and self.pos[Y] >= bomb.range[DIRECTION_UP] and self.pos[Y] <= bomb.range[DIRECTION_DOWN])
+        if bomb.range[DIRECTION_RIGHT] + 1 < (self.map.width - 1) and self.map.array[bomb.pos[Y]][bomb.range[DIRECTION_RIGHT] + 1] in WALLS:
+            self.map.array[bomb.pos[Y]][bomb.range[DIRECTION_RIGHT] + 1] = '3'
+        if bomb.range[DIRECTION_LEFT] - 1 > 0 and self.map.array[bomb.pos[Y]][bomb.range[DIRECTION_LEFT] - 1] in WALLS:
+            self.map.array[bomb.pos[Y]][bomb.range[DIRECTION_LEFT] - 1] = '3'
+        if bomb.range[DIRECTION_DOWN] + 1 < (self.map.height - 1) and self.map.array[bomb.range[DIRECTION_DOWN] + 1][bomb.pos[X]] in WALLS:
+            self.map.array[bomb.range[DIRECTION_DOWN] + 1][bomb.pos[X]] = '3'
+        if bomb.range[DIRECTION_UP] - 1 > 0 and self.map.array[bomb.range[DIRECTION_UP] - 1][bomb.pos[X]] in WALLS:
+            self.map.array[bomb.range[DIRECTION_UP] - 1][bomb.pos[X]] = '3'
         if ( horizontal or vertical ):
             self.health -= 10
             self.immunity = IMMUNITY
             print("{}\'s health: {}".format(self.nickname, self.health))
         if self.health <= 0:
             print("{} is dead!".format(self.nickname))
-            return True
-        return False
+            return True , self.map
+        return False , self.map
 
 ### Class Model ###
 
@@ -225,7 +245,7 @@ class Model:
 
     # add a new fruit
     def add_fruit(self, kind = None, pos = None):
-        if pos is None: pos = self.map.random()
+        if pos is None: pos = self.map.random(is_fruit = True)
         if kind is None: kind = random.choice(FRUITS)
         self.fruits.append(Fruit(kind, self.map, pos))
         print("=> add fruit ({}) at position ({},{})".format(FRUITS_STR[kind], pos[X], pos[Y]))
@@ -276,11 +296,13 @@ class Model:
         for character in self.characters:
             character.tick(dt)
             for fruit in self.fruits:
-                if character.eat(fruit):
+                if character.eat(fruit, self.player):
                     self.fruits.remove(fruit)
 
         # update characters after bomb explosion
         for bomb in self.bombs:
             for character in self.characters:
-                if character.explosion(bomb):
+                boolean, m = character.explosion(bomb)
+                self.map = m
+                if boolean:
                     self.kill_character(character.nickname)

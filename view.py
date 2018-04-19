@@ -19,12 +19,12 @@ RED = (255, 0, 0)
 
 ### Sprites ###
 
-SPRITE_BACKGROUNDS = [ "images/misc/bg0.png", "images/misc/bg1.png", "images/misc/bg2.png" ]
+SPRITE_BACKGROUNDS = [ "images/misc/bg0.png", "images/misc/bg1.png", "images/misc/bg2.png", "images/misc/bg_wall.png" ]
 SPRITE_BLANK = "images/misc/blank.png"
 SPRITE_WALLS = [ "images/misc/wall0.png", "images/misc/wall1.png", "images/misc/wall2.png" ]
 SPRITE_BOMB = "images/misc/bomb.png"
 SPRITE_FIRE = "images/misc/fire.png"
-SPRITE_FRUITS = [ "images/misc/banana.png", "images/misc/cherry.png" ]
+SPRITE_FRUITS = [ "images/misc/banana.png", "images/misc/cherry.png", "images/misc/immune.png", "images/misc/disarmed.png" ]
 SPRITE_DK = [ "images/dk/left.png", "images/dk/right.png", "images/dk/up.png", "images/dk/down.png" ]
 SPRITE_ZELDA = [ "images/zelda/left.png", "images/zelda/right.png", "images/zelda/up.png", "images/zelda/down.png" ]
 SPRITE_BATMAN = [ "images/batman/left.png", "images/batman/right.png", "images/batman/up.png", "images/batman/down.png" ]
@@ -66,6 +66,25 @@ class GraphicView:
                 square = m.array[y][x]
                 x0 = x*SPRITE_SIZE
                 y0 = y*SPRITE_SIZE
+                # backgrounds
+                if square == '0':
+                    self.win.blit(self.sprite_backgrounds[0], (x0, y0))
+                elif square == '1':
+                    self.win.blit(self.sprite_backgrounds[1], (x0, y0))
+                elif square == '2':
+                    self.win.blit(self.sprite_backgrounds[2], (x0, y0))
+                elif square == '3':
+                    self.win.blit(self.sprite_backgrounds[3], (x0, y0))
+                else:
+                    self.win.blit(self.sprite_blank, (x0, y0)) # blank
+
+
+    def render_wall(self, m):
+        for y in range(0, m.height):
+            for x in range(0, m.width):
+                square = m.array[y][x]
+                x0 = x*SPRITE_SIZE
+                y0 = y*SPRITE_SIZE
                 # walls
                 if square == 'w':
                     self.win.blit(self.sprite_walls[0], (x0, y0))
@@ -73,15 +92,6 @@ class GraphicView:
                     self.win.blit(self.sprite_walls[1], (x0, y0))
                 elif square == 'z':
                     self.win.blit(self.sprite_walls[2], (x0, y0))
-                # backgrounds
-                elif square == '0':
-                    self.win.blit(self.sprite_backgrounds[0], (x0, y0))
-                elif square == '1':
-                    self.win.blit(self.sprite_backgrounds[1], (x0, y0))
-                elif square == '2':
-                    self.win.blit(self.sprite_backgrounds[2], (x0, y0))
-                else:
-                    self.win.blit(self.sprite_blank, (x0, y0)) # blank
 
     # render fruit view
     def render_fruit(self, fruit):
@@ -128,10 +138,11 @@ class GraphicView:
     # render PyGame graphic view at each clock tick
     def tick(self, dt):
         self.render_map(self.model.map)
-        for bomb in self.model.bombs:
-            self.render_bomb(bomb)
         for fruit in self.model.fruits:
             self.render_fruit(fruit)
+        self.render_wall(self.model.map)
+        for bomb in self.model.bombs:
+            self.render_bomb(bomb)
         for character in self.model.characters:
             self.render_character(character)
         self.render_player(self.model.player)

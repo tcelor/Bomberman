@@ -52,7 +52,7 @@ class NetworkServerController:
                 co, addr = self.s.accept()
                 self.clients.append(co)
             else:
-                data = client.recv(10000)
+                data = client.recv(5000)
                 data = data.decode()
                 commands = data.split(" ")
                 if not data:
@@ -82,7 +82,6 @@ class NetworkServerController:
                         found = False
                         for account in self.account:
                             nick,cli,char = account
-                            print(char)
                             if nick == commands[1]:
                                 if char != None:
                                     self.model.characters.append(char)
@@ -105,12 +104,11 @@ class NetworkServerController:
                         if character != None and character.nickname == commands[1]:
                             self.model.kill_character(commands[1])
                     if (self.model.characters == []):
+                        self.model.load_map(self.map_name)
                         for player in self.clients:
                             self.model.add_character(self.nick_to_client[player], isplayer = False)
-                        self.model.load_map(self.map_name)
                         self.model.fruits = []
                         self.model.bombs = []
-                        print(self.model.map)
                         for i in range(10): self.model.add_fruit()
                         action = ["#rematch", self.model.characters, self.model.map, self.model.fruits, self.model.bombs]
                         self.send_all(self.clients,pickle.dumps(action))

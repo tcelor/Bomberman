@@ -10,7 +10,7 @@ This is a simple "Bomber Man" game written in Python 3, based on the *PyGame* li
 First clone the project available on GitHUB under GPL:
 
 ```
-  $ git clone https://github.com/orel33/bomber
+  $ git clone https://github.com/tcelor/Bomberman
 ```
 
 To install Python (root privilege required):
@@ -39,7 +39,8 @@ By default, the map "maps/map0" is used, but you can generate you own map (*myma
 
 ## Rules ##
 
-This game is similar to a classic "Bomber Man". This is a *standalone* version of the game for a single player. In this version, a single character (or player) starts the game with an initial amount of 50 health points. Each fruit brings a character with 10 extra health points, while each bomb blast removes 10 health points. A character is dead when its health points reach zero. A character gets immunity for a while after he's hit by a bomb blast. After a character drops a bomb, he is disarmed for a while.
+This game is similar to a classic "Bomber Man". This is a *standalone* version of the game for a single player. In this version, a single character (or player) starts the game with an initial amount of 50 health points. Each fruit brings a character with 10 extra health points, a star that made you immune, you can find a bomb with a cross don't take it because you will be disarme for a while , while each bomb blast removes 10 health points. A character is dead when its health points reach zero. A character gets immunity for a while after he's hit by a bomb blast. After a character drops a bomb, he is disarmed for a while.
+Be careful sometimes a bomb is deployed, and you can destroy a wall by putting a bomb near of it.
 
 To play, just use the following keys:
   * use *arrows* to move the current character
@@ -50,7 +51,9 @@ The implementation of this game follows a simple MVC architecture (Model/View/Co
 
 ## Known Bugs ##
 
-There is a [known bug](https://github.com/pygame/pygame/issues/331) in the *pygame.mixer* module, which causes high CPU usage, when calling *pygame.init()*. A workaround is to disable the mixer module, *pygame.mixer.quit()* or not to enable it, by using *pygame.display.init()* and *pygame.font.init()* instead. Consequently, there is no music, no sound :-(
+There is a [known bug](https://github.com/pygame/pygame/issues/331) in the *pygame.mixer* module, which causes high CPU usage, when calling *pygame.init()*. A workaround is to disable the mixer module, *pygame.mixer.quit()* or not to enable it, by using *pygame.display.init()* and *pygame.font.init()* instead. Consequently, there is no music, no sound
+If you lag you can be killed on server and not on your computer, it can cancel the server if it detect a bad synchronization.
+:-(
 
 ## Documentation ##
 
